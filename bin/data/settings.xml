@@ -12,4 +12,7 @@
 <num_lines>5</num_lines>
 <rate>0.5</rate>
 <smooth>0.7</smooth>
+<threshold>0</threshold>
+	<farThresholdSlider>0</farThresholdSlider>
+	<bThreshWithOpenCV>0</bThreshWithOpenCV>
 </group>

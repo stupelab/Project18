@@ -35,7 +35,7 @@ void MidiManager::newMidiMessage(ofxMidiMessage& msg) {
         mPanel->getFloatSlider("distortAmount")= ofMap(midiMessage.value, 0.0, 127.0, 0.0, 500.0);
     }else if( midiMessage.control == 11){
         mPanel->getFloatSlider("num_lines") = ofMap(midiMessage.value, 0.0, 127.0, 0.0, 20.0);
-    }    
+    }
     
 }
 

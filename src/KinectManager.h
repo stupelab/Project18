@@ -1,11 +1,37 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11134" systemVersion="15F34" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
-    <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11134"/>
-    </dependencies>
-    <objects>
-        <customObject id="-2" userLabel="File's Owner"/>
-        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
-        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-    </objects>
-</document>
+#pragma once
+#include "ofMain.h"
+#include "ofxKinect.h"
+#include "ofxGui.h"
+#include "ofxOpenCv.h"
+
+class KinectManager: public ofBaseApp{
+
+public:
+    KinectManager();
+    void setup( ofxPanel* panel );
+    void update();
+    
+    
+    ofxKinect kinect;
+    
+#ifdef USE_TWO_KINECTS
+    ofxKinect kinect2;
+#endif
+    bool bThreshWithOpenCV;
+    
+    ofxCvColorImage colorImg;
+    
+    ofxCvGrayscaleImage grayImage; // grayscale depth image
+    ofxCvGrayscaleImage grayThreshNear; // the near thresholded image
+    ofxCvGrayscaleImage grayThreshFar; // the far thresholded image
+    ofxCvGrayscaleImage 	grayBg, grayDiff;
+    
+    ofxCvContourFinder contourFinder;
+
+    int nearThreshold;
+    int farThreshold;
+    
+    int angle; //angle of kinect device
+    ofxPanel* mPanel;
+
+};

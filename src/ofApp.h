@@ -4,10 +4,12 @@
 #include "ofxGui.h"
 #include "ofMain.h"
 #include "ofxOpenCv.h"
+#include "ofxCv.h"
 #include "ofxKinect.h"
 #include "particleManager.h"
 #include "AudioManager.h"
 #include "MidiManager.h"
+#include "KinectManager.h"
 // Windows users:
 // You MUST install the libfreenect kinect drivers in order to be able to use
 // ofxKinect. Plug in the kinect and point your Windows Device Manager to the
@@ -37,7 +39,6 @@ public:
 	void draw();
 	void exit();
 	
-	void drawPointCloud();
 	
 	void keyPressed(int key);
 	void mouseDragged(int x, int y, int button);
@@ -46,34 +47,11 @@ public:
 	void mouseEntered(int x, int y);
 	void mouseExited(int x, int y);
 	void windowResized(int w, int h);
-    void updateKinectData(  );
     void silohuettePoints( ofxCvGrayscaleImage grayImage, int num_particles);
        
-    
 	
-	ofxKinect kinect;
-	
-#ifdef USE_TWO_KINECTS
-	ofxKinect kinect2;
-#endif
-	
-	ofxCvColorImage colorImg;
-	
-	ofxCvGrayscaleImage grayImage; // grayscale depth image
-	ofxCvGrayscaleImage grayThreshNear; // the near thresholded image
-	ofxCvGrayscaleImage grayThreshFar; // the far thresholded image
-    ofxCvGrayscaleImage 	grayBg, grayDiff;
-    ofxCvGrayscaleImage postImage; // grayscale depth image
-	
-	ofxCvContourFinder contourFinder;
-	
-//	bool bThreshWithOpenCV;
-	bool bDrawPointCloud;
-	
-	int nearThreshold;
-	int farThreshold;
-	
-	int angle;
+	//Kinect SEtup
+    KinectManager mKinectManager;
     
     ofImage FBimage;
     ofImage mask;
@@ -100,6 +78,7 @@ public:
 
     
     //Particle System
+    ofxCvGrayscaleImage postImage; // grayscale depth image
   
     vector<Particle> p;	  //Particles
     vector <ofVec2f> particle_points;

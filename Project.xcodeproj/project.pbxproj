@@ -21,6 +21,7 @@
 		49BEEB2DFA5319D55AA6899F /* tilt.c in Sources */ = {isa = PBXBuildFile; fileRef = BF2F2AA872288D30F53983EF /* tilt.c */; };
 		58DBB3C11FD2D6AD005EDC3F /* AudioManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58DBB3C01FD2D6AD005EDC3F /* AudioManager.cpp */; };
 		58DBB3C41FD2DF2A005EDC3F /* MidiManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58DBB3C31FD2DF2A005EDC3F /* MidiManager.cpp */; };
+		58DBB3C71FD2EA25005EDC3F /* KinectManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58DBB3C61FD2EA25005EDC3F /* KinectManager.cpp */; };
 		5CBB2AB3A60F65431D7B555D /* ofxButton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C88333E71C9457E441C33474 /* ofxButton.cpp */; };
 		63020F16C7E8DED980111241 /* ofxCvImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C6151136D101F857DAE12722 /* ofxCvImage.cpp */; };
 		631702104AFC104323A9EB79 /* CoreMIDI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 81AC32CCCB56FAABA3E1BDE0 /* CoreMIDI.framework */; };
@@ -156,6 +157,8 @@
 		58DBB3C01FD2D6AD005EDC3F /* AudioManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AudioManager.cpp; sourceTree = "<group>"; };
 		58DBB3C21FD2DEAA005EDC3F /* MidiManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MidiManager.h; sourceTree = "<group>"; };
 		58DBB3C31FD2DF2A005EDC3F /* MidiManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MidiManager.cpp; sourceTree = "<group>"; };
+		58DBB3C51FD2E95F005EDC3F /* KinectManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KinectManager.h; sourceTree = "<group>"; };
+		58DBB3C61FD2EA25005EDC3F /* KinectManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = KinectManager.cpp; sourceTree = "<group>"; };
 		59570D160E1EDD6EB832826A /* frame_source.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = frame_source.hpp; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv2/videostab/frame_source.hpp; sourceTree = SOURCE_ROOT; };
 		59626D03C690200AD4E8B3A6 /* ml.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ml.hpp; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv2/ml/ml.hpp; sourceTree = SOURCE_ROOT; };
 		5A59183C98FC5E69FC90F138 /* contrib.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = contrib.hpp; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv2/contrib/contrib.hpp; sourceTree = SOURCE_ROOT; };
@@ -934,7 +937,9 @@
 				58DBB3C31FD2DF2A005EDC3F /* MidiManager.cpp */,
 				58DBB3C01FD2D6AD005EDC3F /* AudioManager.cpp */,
 				E4B69E1F0A3A1BDC003C02F2 /* ofApp.h */,
+				58DBB3C61FD2EA25005EDC3F /* KinectManager.cpp */,
 				CE73101E78151A2D29511BD4 /* particleManager.cpp */,
+				58DBB3C51FD2E95F005EDC3F /* KinectManager.h */,
 				4EF7DE56F27A4DFE2C706186 /* particleManager.h */,
 				58DBB3C21FD2DEAA005EDC3F /* MidiManager.h */,
 			);
@@ -1117,6 +1122,7 @@
 				F4135EEFC911E9ED211FB6F9 /* core.c in Sources */,
 				E55DEEF784A10419E444669E /* flags.c in Sources */,
 				21A059755481CC0BF969FD2D /* keep_alive.c in Sources */,
+				58DBB3C71FD2EA25005EDC3F /* KinectManager.cpp in Sources */,
 				FCC16AB16073FF0581F50ED7 /* loader.c in Sources */,
 				D31F5C1B140C59B2AF1533A8 /* registration.c in Sources */,
 				49BEEB2DFA5319D55AA6899F /* tilt.c in Sources */,

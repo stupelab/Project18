@@ -1,5 +1,7 @@
 #include "ofApp.h"
 
+using namespace cv;
+using namespace ofxCv;
 //-------------------------------------------------------------/
 
 void ofApp::setup() {
@@ -34,49 +36,10 @@ void ofApp::setup() {
 
 	ofSetLogLevel(OF_LOG_VERBOSE);
 	
-	// enable depth->video image calibration
-	kinect.setRegistration(true);
-    
-	kinect.init();
-	//kinect.init(true); // shows infrared instead of RGB video image
-	//kinect.init(false, false); // disable video image (faster fps)
-	
-	kinect.open();		// opens first available kinect
-	//kinect.open(1);	// open a kinect by id, starting with 0 (sorted by serial # lexicographically))
-	//kinect.open("A00362A08602047A");	// open a kinect using it's unique serial #
-	
-	// print the intrinsic IR sensor values
-	if(kinect.isConnected()) {
-		ofLogNotice() << "sensor-emitter dist: " << kinect.getSensorEmitterDistance() << "cm";
-		ofLogNotice() << "sensor-camera dist:  " << kinect.getSensorCameraDistance() << "cm";
-		ofLogNotice() << "zero plane pixel size: " << kinect.getZeroPlanePixelSize() << "mm";
-		ofLogNotice() << "zero plane dist: " << kinect.getZeroPlaneDistance() << "mm";
-	}
-	
-#ifdef USE_TWO_KINECTS
-	kinect2.init();
-	kinect2.open();
-#endif
-	
-	colorImg.allocate(kinect.width, kinect.height);
-   // mask.allocate(kinect.width, kinect.heigh);
-	grayImage.allocate(kinect.width, kinect.height);
-	grayThreshNear.allocate(kinect.width, kinect.height);
-	grayThreshFar.allocate(kinect.width, kinect.height);
-
-	
-	nearThreshold = 150; //initial value 230, now 150 (Kinect) (200 OpenCv)
-	farThreshold = 60;
-//	bThreshWithOpenCV = true;
+    mKinectManager.setup(&gui );
 	
 	ofSetFrameRate(60);
 	
-	// zero the tilt on startup
-	angle = 10;
-	kinect.setCameraTiltAngle(angle);
-	
-	// start from the front
-	bDrawPointCloud = false;
     
     
  //   FBimage.allocate(kinect.width, kinect.height,OF_IMAGE_COLOR );
@@ -114,18 +77,14 @@ void ofApp::setup() {
 void ofApp::update() {
     
 	//updating values from gui interface
-    nearThreshold = threshold;
+
     history = historySlider;
     param.lifeTime = lifeTime;
     param.friction = friction;
-    farThreshold = farThresholdSlider;
-		
-	kinect.update();
-    
-    //Updating Kinect and OpenCVKinect Images
-    
-    updateKinectData(  );
-    
+	
+    mKinectManager.bThreshWithOpenCV = bThreshWithOpenCV;
+    mKinectManager.update();
+  
     //Particles
     
     //Compute dt
@@ -150,7 +109,7 @@ void ofApp::update() {
     //Born new particles
     bornCount += dt * bornRate;      //Update bornCount value
     
-    FBimage = grayImage.getPixels();
+    FBimage = mKinectManager.grayImage.getPixels();
     postImage = FBimage.getPixels();
     postImage.erode();
     postImage.dilate();
@@ -210,7 +169,7 @@ void ofApp::draw() {
     
     float time = ofGetElapsedTimef();
     
-    contourFinder.findContours(postImage, 30, (postImage.width*postImage.height)/2, 60, true);
+    //contourFinder.findContours(postImage, 30, (postImage.width*postImage.height)/2, 60, true);
     
     
     fbo2.begin();
@@ -394,78 +353,11 @@ void ofApp::silohuettePoints( ofxCvGrayscaleImage img , int num_particles ){
 }
 
 
-
-
-void ofApp::drawPointCloud() {
-	int w = 640;
-	int h = 480;
-	ofMesh mesh;
-	mesh.setMode(OF_PRIMITIVE_POINTS);
-	int step = 2;
-	for(int y = 0; y < h; y += step) {
-		for(int x = 0; x < w; x += step) {
-			if(kinect.getDistanceAt(x, y) > 0) {
-				mesh.addColor(kinect.getColorAt(x,y));
-				mesh.addVertex(kinect.getWorldCoordinateAt(x, y));
-			}
-		}
-	}
-	glPointSize(3);
-	ofPushMatrix();
-	// the projected points are 'upside down' and 'backwards' 
-	ofScale(1, -1, -1);
-	ofTranslate(0, 0, -1000); // center the points a bit
-	ofEnableDepthTest();
-	mesh.drawVertices();
-	ofDisableDepthTest();
-	ofPopMatrix();
-}
-
-void ofApp::updateKinectData(   ){
-    // there is a new frame and we are connected
-    if(kinect.isFrameNew()) {
-        
-        // load grayscale depth image from the kinect source
-        grayImage.setFromPixels(kinect.getDepthPixels());
-        
-        // we do two thresholds - one for the far plane and one for the near plane
-        // we then do a cvAnd to get the pixels which are a union of the two thresholds
-        if(bThreshWithOpenCV) {
-            grayThreshNear = grayImage;
-            grayThreshFar = grayImage;
-            grayThreshNear.threshold(nearThreshold, true);
-            grayThreshFar.threshold(farThreshold);
-            cvAnd(grayThreshNear.getCvImage(), grayThreshFar.getCvImage(), grayImage.getCvImage(), NULL);
-            
-            
-        } else {
-            
-            // or we do it ourselves - show people how they can work with the pixels
-            ofPixels & pix = grayImage.getPixels();
-            int numPixels = pix.size();
-            for(int i = 0; i < numPixels; i++) {
-                if(pix[i] > nearThreshold ) {
-                    pix[i] = 0;
-                } else {
-                    pix[i] = 255;
-                }
-            }
-        }
-        
-        // update the cv images
-        grayImage.flagImageChanged();
-        
-        // find contours which are between the size of 20 pixels and 1/3 the w*h pixels.
-        // also, find holes is set to true so we will get interior contours as well....
-     //   contourFinder.findContours(grayImage, 10, (kinect.width*kinect.height)/2, 20, false);
-    }
-}
-
-
 //--------------------------------------------------------------
 void ofApp::exit() {
-	kinect.setCameraTiltAngle(0); // zero the tilt on exit
-	kinect.close();
+    
+	mKinectManager.kinect.setCameraTiltAngle(0); // zero the tilt on exit
+	mKinectManager.kinect.close();
 	
     gui.saveToFile("settings.xml");
 
@@ -478,81 +370,55 @@ void ofApp::exit() {
 //--------------------------------------------------------------
 void ofApp::keyPressed (int key) {
 	switch (key) {
-		case'p':
-			bDrawPointCloud = !bDrawPointCloud;
-			break;
-			
-		case '>':
-		case '.':
-			farThreshold ++;
-			if (farThreshold > 255) farThreshold = 255;
-			break;
-			
-		case '<':
-		case ',':
-			farThreshold --;
-			if (farThreshold < 0) farThreshold = 0;
-			break;
-			
-		case '+':
-		case '=':
-			nearThreshold ++;
-			if (nearThreshold > 255) nearThreshold = 255;
-			break;
-			
-		case '-':
-			nearThreshold --;
-			if (nearThreshold < 0) nearThreshold = 0;
-			break;
-			
+
 		case 'w':
-			kinect.enableDepthNearValueWhite(!kinect.isDepthNearValueWhite());
+			mKinectManager.kinect.enableDepthNearValueWhite(!mKinectManager.kinect.isDepthNearValueWhite());
 			break;
 			
 		case 'o':
-			kinect.setCameraTiltAngle(angle); // go back to prev tilt
-			kinect.open();
+			mKinectManager.kinect.setCameraTiltAngle(mKinectManager.angle); // go back to prev tilt
+			mKinectManager.kinect.open();
 			break;
 			
 		case 'c':
-			kinect.setCameraTiltAngle(0); // zero the tilt
-			kinect.close();
+			mKinectManager.kinect.setCameraTiltAngle(0); // zero the tilt
+			mKinectManager.kinect.close();
 			break;
 			
 		case '1':
-			kinect.setLed(ofxKinect::LED_GREEN);
+			mKinectManager.kinect.setLed(ofxKinect::LED_GREEN);
 			break;
 			
 		case '2':
-			kinect.setLed(ofxKinect::LED_YELLOW);
+			mKinectManager.kinect.setLed(ofxKinect::LED_YELLOW);
 			break;
 			
 		case '3':
-			kinect.setLed(ofxKinect::LED_RED);
+			mKinectManager.kinect.setLed(ofxKinect::LED_RED);
 			break;
 			
 		case '4':
-			kinect.setLed(ofxKinect::LED_BLINK_GREEN);
+			mKinectManager.kinect.setLed(ofxKinect::LED_BLINK_GREEN);
 			break;
 			
 		case '5':
-			kinect.setLed(ofxKinect::LED_BLINK_YELLOW_RED);
+			mKinectManager.kinect.setLed(ofxKinect::LED_BLINK_YELLOW_RED);
 			break;
 			
 		case '0':
-			kinect.setLed(ofxKinect::LED_OFF);
+			mKinectManager.kinect.setLed(ofxKinect::LED_OFF);
 			break;
 			
 		case OF_KEY_UP:
-			angle++;
-			if(angle>30) angle=30;
-			kinect.setCameraTiltAngle(angle);
+			mKinectManager.angle++;
+			if(mKinectManager.angle>30) mKinectManager.angle=30;
+			mKinectManager.kinect.setCameraTiltAngle(mKinectManager.angle);
 			break;
 			
 		case OF_KEY_DOWN:
-			angle--;
-			if(angle<-30) angle=-30;
-			kinect.setCameraTiltAngle(angle);
+			mKinectManager.angle--;
+			if(mKinectManager.angle<-30) mKinectManager.angle=-30;
+			mKinectManager.kinect.setCameraTiltAngle(mKinectManager.angle);
 			break;
         case 'h':
             showGui = !showGui;
@@ -584,8 +450,7 @@ void ofApp::mouseDragged(int x, int y, int button)
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button)
 {
-    float dist = kinect.getDistanceAt(x, y);
-    ofLog(OF_LOG_NOTICE,"distancia" + ofToString( dist ) ) ;
+
 }
 
 //--------------------------------------------------------------
