@@ -8,7 +8,8 @@ void ofApp::setup() {
     //GUI parameters
     
 
-    gui.setup();
+    gui.setup("Project");
+    gui.loadFromFile("settings.xml");
     gui.add(threshold.setup("nearThreshold", 150, 10, 300));
     gui.add(farThresholdSlider.setup("farThreshold", 60, 0, 10));
     gui.add(historySlider.setup("history", 0.5, 0, 1));
@@ -21,67 +22,16 @@ void ofApp::setup() {
     gui.add( smooth.setup("smooth" , 0.7 , 0.05, 1.0   ));
     
     
-    
-    
     gui.add(bThreshWithOpenCV.setup("Kinect/OpenCV", true));
-    gui.loadFromFile("settings.xml");
+  
     showGui = true;
     
     ofSetLogLevel(OF_LOG_VERBOSE);
     
-    //Set buffer size and fill it by zeros
-    buffer.resize( N, 0.0 );
-    
-    //Start the sound output in stereo (2 channels)
-    //and sound input in mono (1 channel)
-    
-    left = new float[256];
-    right = new float[256];
-    
-    left2 = new float[256];
-    right2 = new float[256];
-    
-    
-    c1.printDeviceList();
-    c1.setDeviceID(2); // in
-    c1.setup(0, 2, 44100, 256, 4);
-    c1.setInput(this);
-    
-     c2.printDeviceList();
-    c2.setDeviceID(1); // out
-    c2.setup(2, 0, 44100, 256, 4);
-    c2.setOutput(this);
+    mAudio.setup();
     //Midi Routing
-    
-    // print input ports to console
-    midiIn.listPorts(); // via instance
-    //ofxMidiIn::listPorts(); // via static as well
-    
-    // open port by number (you may need to change this)
-    //midiIn.openPort(2);
-    midiIn.openPort("iPhone Bluetooth");	// by name
-    //midiIn.openVirtualPort("ofxMidiIn Input"); // open a virtual port
-    
-    // don't ignore sysex, timing, & active sense messages,
-    // these are ignored by default
-    midiIn.ignoreTypes(false, false, false);
-    
-    // add ofApp as a listener
-    midiIn.addListener(this);
-    
-    // print received messages to the console
-    midiIn.setVerbose(true);
-    
-    
-    
-    //Set up sound sample
-  //  sound.loadSound( "surface.wav" );
-    
-    //Set spectrum values to 0
-    /*for (int i=0; i<N; i++) {
-        spectrum[i] = 0.0f;
-    }*/
-    
+    mMidiManager.setup(&gui);
+
 	ofSetLogLevel(OF_LOG_VERBOSE);
 	
 	// enable depth->video image calibration
@@ -247,8 +197,7 @@ void ofApp::update() {
 
     //Shaders configuration
     
- 
-    
+  
 #ifdef USE_TWO_KINECTS
 	kinect2.update();
 #endif
@@ -261,20 +210,7 @@ void ofApp::draw() {
     
     float time = ofGetElapsedTimef();
     
-    
-   /* for( int i=0; i< particle_points.size(); i++ ){
-        
-        ofLog(OF_LOG_NOTICE,"size " + ofToString(  particle_points.size() )) ;
-        ofLog(OF_LOG_NOTICE,"x position:  " + ofToString(  particle_points[i].x )) ;
-        
-        ofSetColor(255,0,0,100);
-        ofDrawCircle(particle_points[i].x, particle_points[i].y , 3);
-    }
-    */
     contourFinder.findContours(postImage, 30, (postImage.width*postImage.height)/2, 60, true);
-    
-    
-    
     
     
     fbo2.begin();
@@ -283,8 +219,6 @@ void ofApp::draw() {
     postImage.erode();
     postImage.draw(0, 0, ofGetWidth(), ofGetHeight());
     fbo2.end();
-    
-    
     
     fbo.begin();
     
@@ -298,7 +232,6 @@ void ofApp::draw() {
 
     
     ofSetColor(255,255,255,220);
-    float  y = 3 * sin( time * linesRate);
     
     linesShader.begin();		//Enable the shader
     linesShader.setUniform1f( "time", time );	//Passing float parameter "time" to shader
@@ -323,8 +256,8 @@ void ofApp::draw() {
 
         shader.setUniformTexture( "mask", fbo2.getTexture(), 2 );
         shader.setUniform2f("resolution", ofVec2f(ofGetWidth(),ofGetHeight()) );
-       // fbo.getTexture().draw( 0, 0 );
-    fbo.getTexture().draw(0,0);
+    
+        fbo.getTexture().draw(0,0);
     
     shader.end();
     
@@ -429,11 +362,7 @@ void ofApp::draw() {
     
 	ofDrawBitmapString(reportStream.str(), 20, 652);
     */
-    
-    text << "control: " << midiMessage.control;
-    ofDrawBitmapString(text.str(), 20, 144);
-    text.str(""); // clear
-    ofDrawRectangle(20, 154, ofMap(midiMessage.control, 0, 127, 0, ofGetWidth()-40), 20);
+
         
     if(!showGui){
         gui.draw();
@@ -464,21 +393,7 @@ void ofApp::silohuettePoints( ofxCvGrayscaleImage img , int num_particles ){
     }
 }
 
-//--------------------------------------------------------------
-void ofApp::newMidiMessage(ofxMidiMessage& msg) {
-    
-    // make a copy of the latest message
-    midiMessage = msg;
-    if( midiMessage.control == 8){
-     distortAmount = ofMap(midiMessage.value, 0.0, 127.0, 0.0, 500.0);
-    }else if( midiMessage.control == 11){
-        num_lines = ofMap(midiMessage.value, 0.0, 127.0, 0.0, 20.0);
-    }
-   
-  
-    
-    
-}
+
 
 
 void ofApp::drawPointCloud() {
@@ -544,39 +459,6 @@ void ofApp::updateKinectData(   ){
         // also, find holes is set to true so we will get interior contours as well....
      //   contourFinder.findContours(grayImage, 10, (kinect.width*kinect.height)/2, 20, false);
     }
-}
-
-//--------------------------------------------------------------
-//Audio input
-void ofApp::audioReceived( float *input, int bufferSize, int nChannels )
-{
-    // samples are "interleaved"
-     for (int i = 0; i < bufferSize; i++){
-     left[i] = input[i*2];
-     right[i] = input[i*2+1];
-     }
-     //bufferCounter++;
-}
-
-
-//--------------------------------------------------------------
-//Audio output
-void ofApp::audioOut(float *output, int bufferSize, int nChannels)
-{
-    
-    for (int i=0; i<bufferSize; i++) {
-        //Push current audio sample value from buffer
-        //into both channels of output.
-        //Also global volume value is used
-        output[ 2*i ] = left[i] * volume;
-        output[ 2*i + 1 ] = right[i] * volume;
-        //Shift to the next audio sample
-        //playPos++;
-        //When the end of buffer is reached, playPos sets to 0
-        //So we hear looped sound
-        //playPos %= N;
-    }
-    
 }
 
 

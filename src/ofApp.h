@@ -6,9 +6,8 @@
 #include "ofxOpenCv.h"
 #include "ofxKinect.h"
 #include "particleManager.h"
-#include "ofxMidi.h"
-
-
+#include "AudioManager.h"
+#include "MidiManager.h"
 // Windows users:
 // You MUST install the libfreenect kinect drivers in order to be able to use
 // ofxKinect. Plug in the kinect and point your Windows Device Manager to the
@@ -30,7 +29,7 @@
 
 
 
-class ofApp : public ofBaseApp , public ofxMidiListener {
+class ofApp : public ofBaseApp{
 public:
 	
 	void setup();
@@ -49,8 +48,7 @@ public:
 	void windowResized(int w, int h);
     void updateKinectData(  );
     void silohuettePoints( ofxCvGrayscaleImage grayImage, int num_particles);
-    void newMidiMessage(ofxMidiMessage& eventArgs);
-    
+       
     
 	
 	ofxKinect kinect;
@@ -92,18 +90,14 @@ public:
     
     //Spectrum Analysis for shading
     ofFloatImage spectrumImage;
-    const int N = 256;		//Number of bands in spectrum
-   // float spectrum[];	//Smoothed spectrum value
-   // ofSound sound1;
-    
-    bool showGui, bLearnBakground;
-
     
     //Gui Parameters
     ofxPanel gui;
     ofxFloatSlider threshold , farThresholdSlider , historySlider, lifeTime, friction, linesRate, distortAmount , distortRate, smooth , num_lines;
     ofXml settings;
     ofxToggle bThreshWithOpenCV;
+    bool showGui, bLearnBakground;
+
     
     //Particle System
   
@@ -120,41 +114,11 @@ public:
     
     
     //Midi I/O
-    stringstream text;
-    
-    ofxMidiIn midiIn;
-    ofxMidiMessage midiMessage;
+    MidiManager mMidiManager;
     
     //Audio I/O
-    
-    //Function for receiving audio
-    void audioReceived( float *input, int bufferSize, int nChannels );
+    AudioManager mAudio;
 
-    //Function for generating audio
-    void audioOut( float *output, int bufferSize, int nChannels );
-    
-    float * left;
-    float * right;
-    
-    float * left2;
-    float * right2;
-    
-    //Object for sound output and input setup
-    ofSoundStream c1;
-    ofSoundStream c2;
-    
-    //Constants
-    const int sampleRate = 44100;           //Sample rate of sound
-    
-    const float volume = 0.5;	//Output sound volume
-    
-    //Variables
-    vector<float> buffer;		//PCM buffer of sound sample
-    int recPos = 0;				//Current recording position in the buffer
-    int playPos = 0;			//Current playing position in the buffer
-    
-    int recordingEnabled = 1;	//Is recording enabled
-    int playingEnabled = 0;		//Is playing enabled
     
 
     
