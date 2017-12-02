@@ -1,0 +1,15 @@
+<group>
+	<nearThreshold>10</nearThreshold>
+<group/>
+<UnknownName>0</UnknownName>
+<Kinect_OpenCV>1</Kinect_OpenCV>
+<history>0.305</history>
+<lifeTime>2.65</lifeTime>
+	<friction>0.014</friction>
+<farThreshold>4.9</farThreshold>
+<linesRate>5</linesRate>
+<distortAmount>2</distortAmount>
+<num_lines>5.95</num_lines>
+<rate>10</rate>
+<smooth>0.7625</smooth>
+</group>
