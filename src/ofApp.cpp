@@ -8,16 +8,15 @@ void ofApp::setup() {
     
      ofBackground(0,0,0);
     //GUI parameters
-    
 
     gui.setup("Project");
     gui.loadFromFile("settings.xml");
-    gui.add(threshold.setup("nearThreshold", 150, 10, 300));
-    gui.add(farThresholdSlider.setup("farThreshold", 60, 0, 10));
-    gui.add(historySlider.setup("history", 0.5, 0, 1));
-    gui.add(lifeTime.setup( "lifeTime",2, 0, 5 ));
+    gui.add( threshold.setup("nearThreshold", 150, 10, 300));
+    gui.add( farThresholdSlider.setup("farThreshold", 60, 0, 10));
+    gui.add( historySlider.setup("history", 0.5, 0, 1));
+    gui.add( lifeTime.setup( "lifeTime",2, 0, 5 ));
     gui.add( friction.setup("friction" ,0.05 , 0, 0.1 ));
-    gui.add( linesRate.setup("linesRate" ,10 , 5, 30 ));
+    gui.add( bornRate.setup("BornRate" ,1000 , 20 , 5000 ));
     gui.add( distortAmount.setup("distortAmount" ,30 , 2,  300   ));
     gui.add( distortRate.setup("rate" ,0.5 , 0.05,  20   ));
     gui.add( num_lines.setup("num_lines" ,5 , 1,  20   ));
@@ -38,8 +37,6 @@ void ofApp::setup() {
 	
     mKinectManager.setup(&gui );
 	
-	ofSetFrameRate(60);
-	
     
     
  //   FBimage.allocate(kinect.width, kinect.height,OF_IMAGE_COLOR );
@@ -54,6 +51,9 @@ void ofApp::setup() {
     fbo.allocate( ofGetWidth(), ofGetHeight() );
     fbo2.allocate( ofGetWidth(), ofGetHeight() );
     
+    FBimage.allocate(mKinectManager.kinect.getWidth(), mKinectManager.kinect.getHeight(), ofImageType::OF_IMAGE_GRAYSCALE);
+    postImage.allocate(mKinectManager.kinect.getWidth(), mKinectManager.kinect.getHeight());
+    vels.allocate(mKinectManager.kinect.getWidth(), mKinectManager.kinect.getHeight(), ofImageType::OF_IMAGE_GRAYSCALE);
     lines.load( "lines.jpg" );
     lines.resize( ofGetWidth(), ofGetHeight());
     
@@ -69,12 +69,23 @@ void ofApp::setup() {
     bornCount = 0;
     time0 = ofGetElapsedTimef();
     
-    
-    
+    //OPtical Flow ********************
+    ofSetFrameRate(120);
+    stepSize = 8;
+    xSteps = mKinectManager.kinect.width / stepSize;
+    ySteps = mKinectManager.kinect.height/ stepSize;
+   
+
 }
 
 //--------------------------------------------------------------
 void ofApp::update() {
+    
+    
+    //Compute dt
+    const float time = ofGetElapsedTimef();
+    const float dt = ofClamp( time - time0, 0, 0.1 );
+    time0 = time;
     
 	//updating values from gui interface
 
@@ -83,15 +94,92 @@ void ofApp::update() {
     param.friction = friction;
 	
     mKinectManager.bThreshWithOpenCV = bThreshWithOpenCV;
-    mKinectManager.update();
-  
+    mKinectManager.nearThreshold = threshold;
+    mKinectManager.farThreshold = farThresholdSlider;
+   // mKinectManager.update();
+    
+    //Optical Flow **********************
+    mKinectManager.update( &gui );
+
+    if(mKinectManager.kinect.isFrameNew()) {
+        flow.setWindowSize(stepSize);
+        
+        ofImage img;
+        img = mKinectManager.kinect.getPixels();
+        img.mirror(false, true);
+        cv::Mat imgMat ;
+        imgMat = toCv(img);
+        flow.calcOpticalFlow(imgMat);
+        
+        FBimage = mKinectManager.grayImage.getPixels();
+        postImage = FBimage.getPixels();
+        postImage.erode();
+        postImage.dilate();
+        
+        postImage.mirror(false, true);
+        ofPixels mask;
+        mask = postImage.getPixels();
+        
+        bornCount += dt * bornRate;      //Update bornCount value
+        
+        particle_pos.resize(bornCount);
+        particle_vel.resize(bornCount);
+
+        int i = 0;
+        float distortionStrength = 4;
+        for(int y = 1; y + 1 < ySteps; y++) {
+            for(int x = 1; x + 1 < xSteps; x++) {
+                if(  mask.getColor( x*stepSize, y*stepSize ).r < 0.5  ){
+                    int i = y * xSteps + x;
+                    ofVec2f position(x * stepSize, y * stepSize);
+                  //  ofRectangle area(position - ofVec2f(stepSize, stepSize) / 2, stepSize, stepSize);
+                  //  ofVec2f offset = flow.getAverageFlowInRegion(area);
+                    ofVec2f offset = flow.getFlowOffset(position.x, position.y);
+                    
+                    position.x = ofMap( position.x, 0, mKinectManager.kinect.width, 0, ofGetWidth() );
+                    position.y = ofMap( position.y, 0, mKinectManager.kinect.height, 0, ofGetHeight() );
+                    
+                    
+                    float red = ofMap( offset.length(), 0 , 2, 0 ,255 );
+                    ofColor col = ofColor(red,0,0);
+                    vels.setColor(x * stepSize, y * stepSize, col );
+                    if( offset.length() > 1 ){
+                        particle_vel.push_back( offset );
+                        particle_pos.push_back( position );
+                    }
+
+                }
+                i++;
+            }
+        }
+        vels.update();
+        
+        
+        if ( bornCount >= 1 ) {          //It's time to born particle(s)
+            int bornN = int( bornCount );//How many born
+            bornCount -= bornN;          //Correct bornCount value
+            for (int i=0; i<bornN; i++) {
+                int random_index =  int(ofRandom(particle_vel.size()));
+                Particle newP;
+                if( particle_vel.size() > i ){
+                    newP.setup(  ofVec2f(  particle_pos[ random_index ].x
+                                         , particle_pos[ random_index ].y )
+                               , ofVec2f( particle_vel[ random_index ].x,
+                                         particle_vel[ random_index ].y )
+                               );            //Start a new particle}
+                }
+                p.push_back( newP );     //Add this particle to array
+            }
+        }
+        
+    }//end Kinect New Frame Analysis
+    
+    particle_pos.clear();
+    particle_vel.clear();
     //Particles
     
-    //Compute dt
-    float time = ofGetElapsedTimef();
-    float dt = ofClamp( time - time0, 0, 0.1 );
-    time0 = time;
     
+    //Born new particles
 
     
     //Delete inactive particles
@@ -105,11 +193,7 @@ void ofApp::update() {
         }
     }
     
-    
-    //Born new particles
-    bornCount += dt * bornRate;      //Update bornCount value
-    
-    FBimage = mKinectManager.grayImage.getPixels();
+  /*  FBimage = mKinectManager.grayImage.getPixels();
     postImage = FBimage.getPixels();
     postImage.erode();
     postImage.dilate();
@@ -119,43 +203,15 @@ void ofApp::update() {
 
    // silohuettePoints(postImage, bornCount);
 
-    vector <float> target_i;
-    vector <float> target_j;
-    target_i.resize(ofGetWidth());
-    target_j.resize(ofGetHeight());
-    ofImage pixels;
-    pixels = postImage.getPixels();
-    //Cojo los puntos blancos de la silueta
-    for( int i=0; i< postImage.getWidth(); i++ ){
-        for( int j=0; j< postImage.getHeight(); j++ ){
-            if(  pixels.getColor( i, j ).r < 0.5    ){
-                target_i.push_back(i);
-                target_j.push_back(j);
-            }
-        }
-    }
+   */
     
-    if ( bornCount >= 1 ) {          //It's time to born particle(s)
-        int bornN = int( bornCount );//How many born
-        bornCount -= bornN;          //Correct bornCount value
-        for (int i=0; i<bornN; i++) {
-             int random_index =  int(ofRandom(target_j.size()));
-            Particle newP;
-            newP.setup(  ofVec2f(target_i[ random_index  ], target_j[ random_index  ] )  );            //Start a new particle
-            p.push_back( newP );     //Add this particle to array
-        }
-    }
-    particle_points.clear();
-    
-    param.mask = postImage.getPixels();
+
+  //  param.mask = postImage.getPixels();
+
     //Update the particles
     for (int i=0; i<p.size(); i++) {
         p[i].update( dt );
     }
-    
-
-    //Shaders configuration
-    
   
 #ifdef USE_TWO_KINECTS
 	kinect2.update();
@@ -165,14 +221,17 @@ void ofApp::update() {
 //--------------------------------------------------------------
 void ofApp::draw() {
 	
-   // ofBackground(0,0,0);
-    
+    ofBackground(0);
     float time = ofGetElapsedTimef();
+
+   // postImage.draw(0, 0, ofGetWidth(), ofGetHeight());
+    for (int i=0; i<p.size(); i++) {
+        p[i].draw();
+
+    }
     
-    //contourFinder.findContours(postImage, 30, (postImage.width*postImage.height)/2, 60, true);
-    
-    
-    fbo2.begin();
+    /*
+   fbo2.begin();
    //     postImage.invert();
     postImage.dilate();
     postImage.erode();
@@ -220,75 +279,11 @@ void ofApp::draw() {
     
     shader.end();
     
-    
-    
-    //Disable transparency
-
-  //  contourFinder.draw(0, 0, ofGetWidth(), ofGetHeight());
-  
+    */
 
     /*
     
-	if(bDrawPointCloud) {
-		easyCam.begin();
-		drawPointCloud();
-		easyCam.end();
-	} else {
-        
-	// draw from the live kinect
-	//	kinect.drawDepth(10, 10, 400, 300);
-	//	kinect.draw(420, 10, 400, 300);
-	//kinect.drawDepth(0,0, ofGetWidth(), ofGetHeight());
-       
-    //fbo mask
-    
-        fbo.begin();
-            postImage.draw(0, 0, ofGetWidth(), ofGetHeight());
-        fbo.end();
-        
-       //color img
-        fbo2.begin();
-        kinect.draw(0, 0, ofGetWidth(), ofGetHeight());
-        fbo2.end();
-        
-        //Reading contents of rendered fbo.
-        //Below we will use it for line drawing
-        ofPixels pixels;
-        fbo2.readToPixels(pixels);
-
-        
-        shader.begin();
-        
-        shader.setUniform1f( "time", time );
-        shader.setUniform1f( "distortAmount", distortAmount );
-        shader.setUniformTexture( "mask", fbo.getTexture(), 2 );
-        shader.setUniformTexture( "texture1", fbo2.getTexture(), 1 );
-        shader.setUniformTexture( "lines", lines, 3 );
-        
-        
-        //Draw lines (through vertex->geometry->fragment shaders)
-        ofSetColor( 255, 255, 255 );
-        int stepx = 10;
-        int stepy = 10;
-        float len = 20;
-        //Scan fbo pixels colors and search for not-transparent pixels
-        for (int y=0; y< ofGetHeight(); y+=stepy) {
-            for (int x=0; x< ofGetWidth(); x+=stepx) {
-                if ( pixels.getColor( x, y ).a > 0 ) {
-                    ofDrawLine( x, y, x, y - len );
-                    
-                }
-            }
-        }
-        
-        fbo2.draw(0,0);
-        
-        
-        shader.end();
-
-   
-
-		
+			
 #ifdef USE_TWO_KINECTS
 		kinect2.draw(420, 320, 400, 300);
 #endif
@@ -333,7 +328,7 @@ void ofApp::draw() {
 
 void ofApp::silohuettePoints( ofxCvGrayscaleImage img , int num_particles ){
     
-    particle_points.resize(bornCount);
+    particle_pos.resize(bornCount);
     target_i.resize(ofGetWidth());
     target_j.resize(ofGetHeight());
     vector <ofVec2f> target_particle;
@@ -374,7 +369,6 @@ void ofApp::keyPressed (int key) {
 		case 'w':
 			mKinectManager.kinect.enableDepthNearValueWhite(!mKinectManager.kinect.isDepthNearValueWhite());
 			break;
-			
 		case 'o':
 			mKinectManager.kinect.setCameraTiltAngle(mKinectManager.angle); // go back to prev tilt
 			mKinectManager.kinect.open();
@@ -384,31 +378,6 @@ void ofApp::keyPressed (int key) {
 			mKinectManager.kinect.setCameraTiltAngle(0); // zero the tilt
 			mKinectManager.kinect.close();
 			break;
-			
-		case '1':
-			mKinectManager.kinect.setLed(ofxKinect::LED_GREEN);
-			break;
-			
-		case '2':
-			mKinectManager.kinect.setLed(ofxKinect::LED_YELLOW);
-			break;
-			
-		case '3':
-			mKinectManager.kinect.setLed(ofxKinect::LED_RED);
-			break;
-			
-		case '4':
-			mKinectManager.kinect.setLed(ofxKinect::LED_BLINK_GREEN);
-			break;
-			
-		case '5':
-			mKinectManager.kinect.setLed(ofxKinect::LED_BLINK_YELLOW_RED);
-			break;
-			
-		case '0':
-			mKinectManager.kinect.setLed(ofxKinect::LED_OFF);
-			break;
-			
 		case OF_KEY_UP:
 			mKinectManager.angle++;
 			if(mKinectManager.angle>30) mKinectManager.angle=30;
@@ -420,23 +389,28 @@ void ofApp::keyPressed (int key) {
 			if(mKinectManager.angle<-30) mKinectManager.angle=-30;
 			mKinectManager.kinect.setCameraTiltAngle(mKinectManager.angle);
 			break;
+        case 'S' : {
+            ofFileDialogResult res;
+            res = ofSystemSaveDialog("preset.xml", "Saving Preset");
+            if(res.bSuccess) gui.saveToFile(res.filePath);
+            break;}
         case 'h':
             showGui = !showGui;
             break;
         case 'x':
             bLearnBakground = true;
-        case 'f':
+        case 'F':
             ofToggleFullscreen();
         case 's':
             ofSaveScreen("screenshot"+ ofToString(ofRandom(0,1000),0)+".png");
+            break;
             //Save Preset
-        case'S' :
-                ofFileDialogResult res;
-                res = ofSystemSaveDialog("preset.xml", "Saving Preset");
-                if(res.bSuccess) gui.saveToFile(res.filePath);
-                break;
-        
-            
+        case 'L':{
+            ofFileDialogResult resload;
+            resload = ofSystemLoadDialog("preset.xml", "Loading Preset");
+            resload.filePath ="/of_v0.9.8_osx_release/apps/myApps/Project18/bin/data/";
+            if(resload.bSuccess) gui.loadFromFile(resload.filePath);
+            break;}
 
 	}
 }

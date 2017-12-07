@@ -36,9 +36,10 @@ ofPoint randomPointInCircle( float maxRad ){
 }
 
 //--------------------------------------------------------------
-void Particle::setup(  ofVec2f position ) {
+void Particle::setup(  ofVec2f position , ofVec2f velocity ) {
     pos = position ;
-    vel = ofVec2f( ofRandom( 5 ), ofRandom(5));
+    vel = velocity * 3;
+   
    // pos = param.eCenter + randomPointInCircle( param.eRad );
    // vel = randomPointInCircle( param.velRad );
     time = 0;
@@ -79,12 +80,11 @@ void Particle::update( float dt ){
         //Update time and check if particle should die
         time += dt;
         if ( time >= lifeTime ) {
-       
             live = false;   //Particle is now considered as died
         }
         
         //Si la particula se encuentra fuera de la mascara augmentamos su contador lifeTime
-        if( param.mask.getColor( (pos.x), int(pos.y) ).r > 0.5 && isMask){
+      /*  if( param.mask.getColor( (pos.x), int(pos.y) ).r > 0.5 && isMask){
             lifeTime = param.lifeTime*0.85;
             acc = acc*-1.0;
           //  hue_die = ofColor::papayaWhip ;
@@ -92,7 +92,7 @@ void Particle::update( float dt ){
             hue_die = ofColor(255, 44, 66);
             hue_die.a = 120;
             isMask = false;
-        }
+        }*/
         
         //Updating color
         float lerpFactor = ofMap( time, 0, lifeTime, 0,  1  );

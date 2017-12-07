@@ -32,7 +32,7 @@ extern Params param; //Declaration of a global variable
 class Particle {
 public:
     Particle();                //Class constructor
-    void setup( ofVec2f pos );              //Start particle
+    void setup( ofVec2f pos,  ofVec2f vel );              //Start particle
     void update( float dt);   //Recalculate physics
     void draw();               //Draw particle
     

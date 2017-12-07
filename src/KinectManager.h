@@ -9,7 +9,7 @@ class KinectManager: public ofBaseApp{
 public:
     KinectManager();
     void setup( ofxPanel* panel );
-    void update();
+    void update( ofxPanel* panel  );
     
     
     ofxKinect kinect;

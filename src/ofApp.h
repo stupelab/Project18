@@ -3,7 +3,6 @@
 
 #include "ofxGui.h"
 #include "ofMain.h"
-#include "ofxOpenCv.h"
 #include "ofxCv.h"
 #include "ofxKinect.h"
 #include "particleManager.h"
@@ -71,7 +70,7 @@ public:
     
     //Gui Parameters
     ofxPanel gui;
-    ofxFloatSlider threshold , farThresholdSlider , historySlider, lifeTime, friction, linesRate, distortAmount , distortRate, smooth , num_lines;
+    ofxFloatSlider threshold , farThresholdSlider , historySlider, lifeTime, friction, bornRate, distortAmount , distortRate, smooth , num_lines;
     ofXml settings;
     ofxToggle bThreshWithOpenCV;
     bool showGui, bLearnBakground;
@@ -81,9 +80,10 @@ public:
     ofxCvGrayscaleImage postImage; // grayscale depth image
   
     vector<Particle> p;	  //Particles
-    vector <ofVec2f> particle_points;
+    vector <ofVec2f> particle_pos;
+    vector <ofVec2f> particle_vel;
  
-    float bornRate;       //Particles born rate per second
+ //   float bornRate;       //Particles born rate per second
     float bornCount;      //Integrated number of particles to born
     
     float history;        //Control parameter for trails
@@ -97,8 +97,12 @@ public:
     
     //Audio I/O
     AudioManager mAudio;
-
     
+    //FLow distort
+
+    ofxCv::FlowFarneback flow;
+    int stepSize, xSteps, ySteps;
+    ofImage vels;
 
     
 };

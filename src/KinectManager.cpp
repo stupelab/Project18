@@ -45,13 +45,14 @@ void KinectManager::setup( ofxPanel* panel ){
 
 }
 
-void KinectManager::update(){
+void KinectManager::update( ofxPanel* panel ){
     
     kinect.update();
-    nearThreshold = mPanel->getFloatSlider("threshold");
-    farThreshold = mPanel->getFloatSlider("farThresholdSlider");
-   // bThreshWithOpenCV = mPanel->getToggle("bThreshWithOpenCV");
-    //Updating Kinect and OpenCVKinect Images
+    mPanel = panel;
+  //  nearThreshold = mPanel->getFloatSlider("threshold");
+  //  farThreshold = mPanel->getFloatSlider("farThresholdSlider");
+                ofLogNotice() << "threshold: " << nearThreshold ;
+      //Updating Kinect and OpenCVKinect Images
     // there is a new frame and we are connected
     if(kinect.isFrameNew()) {
         
@@ -67,7 +68,7 @@ void KinectManager::update(){
             grayThreshFar.threshold(farThreshold);
             cvAnd(grayThreshNear.getCvImage(), grayThreshFar.getCvImage(), grayImage.getCvImage(), NULL);
             
-            
+
         } else {
             
             // or we do it ourselves - show people how they can work with the pixels
