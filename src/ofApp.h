@@ -11,6 +11,8 @@
 #include "KinectManager.h"
 #include "ofxOsc.h"
 #include "MSAFluid.h"
+#include "AVPOscManager.h"
+
 // Windows users:
 // You MUST install the libfreenect kinect drivers in order to be able to use
 // ofxKinect. Plug in the kinect and point your Windows Device Manager to the
@@ -30,8 +32,8 @@
 //#define USE_TWO_KINECTS
 
 // listen on port 12345
-#define PORT 9001
-#define NUM_MSG_STRINGS 20
+//#define PORT 9001
+
 
 
 class ofApp : public ofBaseApp{
@@ -109,13 +111,8 @@ public:
     ofImage vels;
     
     //Osc Receiver
-    ofTrueTypeFont font;
-    ofxOscReceiver receiver;
-    
-    int current_msg_string;
-    string msg_strings[NUM_MSG_STRINGS];
-    float timers[NUM_MSG_STRINGS];
-    
+
+    AVPOscManager mOsc;
     
     //MSA Fluid
     

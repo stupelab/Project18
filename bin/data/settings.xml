@@ -3,9 +3,9 @@
 <group/>
 <UnknownName>0</UnknownName>
 <Kinect_OpenCV>1</Kinect_OpenCV>
-<history>0.5</history>
-<lifeTime>2</lifeTime>
-	<friction>0.05</friction>
+<history>26</history>
+<lifeTime>0</lifeTime>
+	<friction>0</friction>
 <farThreshold>60</farThreshold>
 <linesRate>10</linesRate>
 <distortAmount>30</distortAmount>
@@ -15,5 +15,5 @@
 <threshold>0</threshold>
 	<farThresholdSlider>0</farThresholdSlider>
 	<bThreshWithOpenCV>0</bThreshWithOpenCV>
-<BornRate>1500</BornRate>
+<BornRate>0</BornRate>
 </group>
