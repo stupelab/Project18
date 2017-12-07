@@ -15,4 +15,5 @@
 <threshold>0</threshold>
 	<farThresholdSlider>0</farThresholdSlider>
 	<bThreshWithOpenCV>0</bThreshWithOpenCV>
+<BornRate>1500</BornRate>
 </group>

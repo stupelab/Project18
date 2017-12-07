@@ -9,6 +9,8 @@
 #include "AudioManager.h"
 #include "MidiManager.h"
 #include "KinectManager.h"
+#include "ofxOsc.h"
+#include "MSAFluid.h"
 // Windows users:
 // You MUST install the libfreenect kinect drivers in order to be able to use
 // ofxKinect. Plug in the kinect and point your Windows Device Manager to the
@@ -27,7 +29,9 @@
 // uncomment this to read from two kinects simultaneously
 //#define USE_TWO_KINECTS
 
-
+// listen on port 12345
+#define PORT 9001
+#define NUM_MSG_STRINGS 20
 
 
 class ofApp : public ofBaseApp{
@@ -103,6 +107,23 @@ public:
     ofxCv::FlowFarneback flow;
     int stepSize, xSteps, ySteps;
     ofImage vels;
+    
+    //Osc Receiver
+    ofTrueTypeFont font;
+    ofxOscReceiver receiver;
+    
+    int current_msg_string;
+    string msg_strings[NUM_MSG_STRINGS];
+    float timers[NUM_MSG_STRINGS];
+    
+    
+    //MSA Fluid
+    
+    
+  //  ofxMSAFluidSolver	fluidSolver;
+  //  ofxMSAFluidDrawer	fluidDrawer;
+    
+  //  ParticleSystem		particleSystem;
 
     
 };

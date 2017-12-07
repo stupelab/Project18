@@ -49,10 +49,10 @@ void KinectManager::update( ofxPanel* panel ){
     
     kinect.update();
     mPanel = panel;
-  //  nearThreshold = mPanel->getFloatSlider("threshold");
+  
+   //nearThreshold = mPanel->getFloatSlider("threshold");
   //  farThreshold = mPanel->getFloatSlider("farThresholdSlider");
-                ofLogNotice() << "threshold: " << nearThreshold ;
-      //Updating Kinect and OpenCVKinect Images
+                   //Updating Kinect and OpenCVKinect Images
     // there is a new frame and we are connected
     if(kinect.isFrameNew()) {
         
