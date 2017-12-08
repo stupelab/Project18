@@ -1,5 +1,6 @@
 #pragma once
 #include "ofxOsc.h"
+#include "ofxGui.h"
 
 #define NUM_MSG_STRINGS  20
 class AVPOscManager: public ofBaseApp{
@@ -9,6 +10,8 @@ class AVPOscManager: public ofBaseApp{
     void setup( int port );
     void update();
     void draw();
+    void onMessageReceived(ofxOscMessage &msg);
+    
     
     ofTrueTypeFont font;
     ofxOscReceiver receiver;
@@ -21,4 +24,6 @@ class AVPOscManager: public ofBaseApp{
     float history, lifeTime , friction , bornRate;
     // FX Parameters
     float distortAmount;
+    bool newMsg;
+    
 };

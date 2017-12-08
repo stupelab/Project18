@@ -9,20 +9,23 @@ void AVPOscManager::setup( int port ){
     cout << "listening for osc messages on port " << port << "\n";
     receiver.setup(port);
     
+    
 };
 void AVPOscManager::update( ){
     
-    
+    newMsg = false;
     // check for waiting messages
     while(receiver.hasWaitingMessages()){
+        
+        newMsg = true;
         // get the next message
         ofxOscMessage m;
-        receiver.getNextMessage(m);
+        receiver.getNextMessage(&m);
 
         // check for mouse moved message
         if(m.getAddress() == "/test"){
-            current_msg_string = receiver.getNextMessage(m);
-            ofLogNotice() << "test:  " << m.getArgAsInt(0) ;
+            current_msg_string = receiver.getNextMessage(&m);
+            ofLogNotice() << "test:  " << m.getArgAsInt32(0) ;
         }else if( m.getAddress() == "/particle/history" ){
             history = ofMap(m.getArgAsFloat(0), 0 ,1 ,0 ,1 );
         }else if( m.getAddress() == "/particle/lifetime" ){
@@ -67,6 +70,7 @@ void AVPOscManager::update( ){
         
     }
 
+    
 };
 
 

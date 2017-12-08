@@ -4,7 +4,7 @@ using namespace cv;
 using namespace ofxCv;
 //-------------------------------------------------------------/
 
-void ofApp::setup() {
+void ofApp::setup(){
     
      ofBackground(0,0,0);
     
@@ -41,11 +41,9 @@ void ofApp::setup() {
 	ofSetLogLevel(OF_LOG_VERBOSE);
 	
     mKinectManager.setup(&gui );
-	
     
  //   FBimage.allocate(kinect.width, kinect.height,OF_IMAGE_COLOR );
     
-   
     //Loading shaders *********************************************
    // shader.load( "shaderVert.c", "shaderFrag.c" );
     shader.load( "wave/shaderVert.c", "wave/shaderFrag.c" );
@@ -60,8 +58,6 @@ void ofApp::setup() {
     vels.allocate(mKinectManager.kinect.getWidth(), mKinectManager.kinect.getHeight(), ofImageType::OF_IMAGE_GRAYSCALE);
     lines.load( "lines.jpg" );
     lines.resize( ofGetWidth(), ofGetHeight());
-    
-
     
     //ParticleSystem parameters *********************************************
     
@@ -91,20 +87,30 @@ void ofApp::update() {
     const float dt = ofClamp( time - time0, 0, 0.1 );
     time0 = time;
     
-    mOsc.update();
-    historySlider = mOsc.history;
-    lifeTime = mOsc.lifeTime;
-    friction = mOsc.friction;
-    bornRate = mOsc.bornRate;
     
-	//updating values from gui interface
+    
+    
+      mOsc.update();
+    if( mOsc.newMsg ){
+        historySlider = mOsc.history;
+        lifeTime = mOsc.lifeTime;
+        friction = mOsc.friction;
+        bornRate = mOsc.bornRate;
+        distortAmount = mOsc.distortAmount;
+    }
+    
+       lifeTime = ofMap(mAudio.audioAnalyzer.getValue(RMS, 0) , 0. , 1., 0., 5.);
 
-    param.lifeTime = lifeTime;
-    param.friction = friction;
-	
-    mKinectManager.bThreshWithOpenCV = bThreshWithOpenCV;
-    mKinectManager.nearThreshold = threshold;
-    mKinectManager.farThreshold = farThresholdSlider;
+	//updating values from gui interface
+    
+        param.lifeTime = lifeTime;
+        param.friction = friction;
+        
+        mKinectManager.bThreshWithOpenCV = bThreshWithOpenCV;
+        mKinectManager.nearThreshold = threshold;
+        mKinectManager.farThreshold = farThresholdSlider;
+    
+
     
    // mKinectManager.update();
     
@@ -238,20 +244,17 @@ void ofApp::draw() {
     float time = ofGetElapsedTimef();
 
    // postImage.draw(0, 0, ofGetWidth(), ofGetHeight());
-    for (int i=0; i<p.size(); i++) {
-        p[i].draw();
-
-    }
     
     mOsc.draw();
     
-    /*
+    
    fbo2.begin();
    //     postImage.invert();
     postImage.dilate();
     postImage.erode();
     postImage.draw(0, 0, ofGetWidth(), ofGetHeight());
-    fbo2.end();
+    
+   fbo2.end();
     
     fbo.begin();
     
@@ -277,6 +280,8 @@ void ofApp::draw() {
     // fbo.getTexture().draw( 0, 0 );
     fbo.getTexture().draw(0,0);
     
+
+    
     linesShader.end();
     
     fbo.end();
@@ -292,9 +297,14 @@ void ofApp::draw() {
     
         fbo.getTexture().draw(0,0);
     
+        for (int i=0; i<p.size(); i++) {
+            p[i].draw();
+            
+        
+        }
+    
     shader.end();
     
-    */
 
     /*
     

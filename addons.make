@@ -1,3 +1,5 @@
+ofxAudioAnalyzer
+ofxAudioDecoder
 ofxCv
 ofxGui
 ofxKinect
